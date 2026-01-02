@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Puzzle 3x3</title>
+<style>
+body {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+  background:#f8f8f8;
+  font-family:Arial, sans-serif;
+  padding:10px;
+}
+
+#chrono {
+  font-size:28px;
+  font-weight:bold;
+  margin-bottom:15px;
+  padding:10px 20px;
+  background:white;
+  border-radius:8px;
+  border:2px solid #333;
+}
+
+#puzzle {
+  display:grid;
+  grid-template-columns:repeat(3,100px);
+  grid-template-rows:repeat(3,100px);
+  gap:5px;
+  margin-bottom:20px;
+}
+
+.piece {
+  width:100px;
+  height:100px;
+  background-size:300px 300px;
+  border:2px solid #555;
+  cursor:pointer;
+  touch-action:manipulation;
+  border-radius:6px;
+}
+
+#result {
+  display:none;
+  text-align:center;
+  margin-top:20px;
+}
+
+#result img {
+  max-width:300px;
+  border-radius:10px;
+  margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<div id="chrono">01:00</div>
+<div id="puzzle"></div>
+
+<div id="result">
+  <h3>Bravo ! Tu as réussi 🎉</h3>
+  <img src="Imprim.png" alt="Image finale">
+</div>
+
+<script>
+const puzzle = document.getElementById('puzzle');
+const result = document.getElementById('result');
+const chronoDisplay = document.getElementById('chrono');
+const size = 3;
+
+let pieces = Array.from({length: 9}, (_, i) => i);
+
+function shuffle(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array;
+}
+
+pieces = shuffle([...pieces]);
+
+function renderPuzzle() {
+  puzzle.innerHTML = '';
+  pieces.forEach((num, index) => {
+    const div = document.createElement('div');
+    div.className = 'piece';
+    div.dataset.index = index;
+    div.style.backgroundImage = "url('Imprim.png')";
+    const x = -(num % size) * 100;
+    const y = -Math.floor(num / size) * 100;
+    div.style.backgroundPosition = `${x}px ${y}px`;
+    puzzle.appendChild(div);
+  });
+}
+
+renderPuzzle();
+
+let first = null;
+puzzle.addEventListener('click', e => {
+  if (!e.target.classList.contains('piece')) return;
+  if (!first) {
+    first = e.target;
+    first.style.border = '3px solid yellow';
+  } else {
+    const second = e.target;
+    [pieces[first.dataset.index], pieces[second.dataset.index]] =
+    [pieces[second.dataset.index], pieces[first.dataset.index]];
+    first.style.border = '';
+    first = null;
+    renderPuzzle();
+    checkWin();
+  }
+});
+
+function checkWin() {
+  if (pieces.every((val, i) => val === i)) {
+    result.style.display = 'block';
+  }
+}
+
+let timer;
+function startChrono() {
+  clearInterval(timer);
+  let time = 60;
+  updateChrono(time);
+
+  timer = setInterval(() => {
+    time--;
+    updateChrono(time);
+
+    if (time === 10) {
+      const audio = new Audio("tic.mp3");
+      audio.play();
+    }
+
+    if (time <= 0) {
+      clearInterval(timer);
+      autoReset();
+    }
+  }, 1000);
+}
+
+function updateChrono(time) {
+  chronoDisplay.textContent = `00:${time.toString().padStart(2, '0')}`;
+}
+
+function updateChronoInitial() {
+  chronoDisplay.textContent = "01:00";
+}
+
+function autoReset() {
+  pieces = shuffle([...pieces]);
+  renderPuzzle();
+  result.style.display = 'none';
+  updateChronoInitial();
+  startChrono();
+}
+
+// lancement initial
+updateChronoInitial();
+startChrono();
+</script>
+
+</body>
+</html>
+

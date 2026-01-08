@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Puzzle 3x3</title>
+<title>Puzzle 4x4</title>
 <style>
 body {
   display:flex;
@@ -28,16 +28,18 @@ body {
 
 #puzzle {
   display:grid;
-  grid-template-columns:repeat(3,100px);
-  grid-template-rows:repeat(3,100px);
+  /* Modification pour 4 colonnes */
+  grid-template-columns:repeat(4, 80px);
+  grid-template-rows:repeat(4, 80px);
   gap:5px;
   margin-bottom:20px;
 }
 
 .piece {
-  width:100px;
-  height:100px;
-  background-size:300px 300px;
+  width:80px; /* Taille légèrement réduite pour que ça tienne sur l'écran */
+  height:80px;
+  /* Modification : l'image doit faire 4x la taille d'une pièce (4x80 = 320) */
+  background-size:320px 320px;
   border:2px solid #555;
   cursor:pointer;
   touch-action:manipulation;
@@ -71,9 +73,12 @@ body {
 const puzzle = document.getElementById('puzzle');
 const result = document.getElementById('result');
 const chronoDisplay = document.getElementById('chrono');
-const size = 3;
 
-let pieces = Array.from({length: 9}, (_, i) => i);
+// --- MODIFICATIONS POUR 4x4 ---
+const size = 4; 
+const pieceWidth = 80; // Doit correspondre au CSS
+let pieces = Array.from({length: size * size}, (_, i) => i);
+// ------------------------------
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -92,8 +97,11 @@ function renderPuzzle() {
     div.className = 'piece';
     div.dataset.index = index;
     div.style.backgroundImage = "url('Imprim.png')";
-    const x = -(num % size) * 100;
-    const y = -Math.floor(num / size) * 100;
+    
+    // Calcul des positions pour le 4x4
+    const x = -(num % size) * pieceWidth;
+    const y = -Math.floor(num / size) * pieceWidth;
+    
     div.style.backgroundPosition = `${x}px ${y}px`;
     puzzle.appendChild(div);
   });
@@ -121,6 +129,7 @@ puzzle.addEventListener('click', e => {
 function checkWin() {
   if (pieces.every((val, i) => val === i)) {
     result.style.display = 'block';
+    clearInterval(timer); // On arrête le chrono quand c'est gagné !
   }
 }
 
@@ -136,7 +145,7 @@ function startChrono() {
 
     if (time === 10) {
       const audio = new Audio("tic.mp3");
-      audio.play();
+      audio.play().catch(e => console.log("Audio bloqué par le navigateur"));
     }
 
     if (time <= 0) {
@@ -169,4 +178,3 @@ startChrono();
 
 </body>
 </html>
-

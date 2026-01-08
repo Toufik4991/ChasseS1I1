@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Puzzle 4x4</title>
+<title>Puzzle Challenge 4x4</title>
 <style>
 body {
   display:flex;
@@ -11,62 +11,107 @@ body {
   align-items:center;
   justify-content:center;
   min-height:100vh;
-  background:#f8f8f8;
-  font-family:Arial, sans-serif;
+  background:#f0f0f0;
+  font-family:'Segoe UI', Arial, sans-serif;
   padding:10px;
+  margin:0;
 }
 
 #chrono {
-  font-size:28px;
+  font-size:32px;
   font-weight:bold;
   margin-bottom:15px;
-  padding:10px 20px;
+  padding:10px 30px;
   background:white;
-  border-radius:8px;
-  border:2px solid #333;
+  border-radius:12px;
+  border:3px solid #333;
+  transition: all 0.3s ease;
+}
+
+/* Effet dynamique pour les 10 dernières secondes */
+.danger {
+  color: #ff0000;
+  border-color: #ff0000 !important;
+  animation: pulse 0.5s infinite alternate;
+  transform: scale(1.1);
+}
+
+@keyframes pulse {
+  from { box-shadow: 0 0 5px #ff0000; }
+  to { box-shadow: 0 0 20px #ff0000; }
 }
 
 #puzzle {
   display:grid;
-  /* Modification pour 4 colonnes */
   grid-template-columns:repeat(4, 80px);
   grid-template-rows:repeat(4, 80px);
   gap:5px;
-  margin-bottom:20px;
+  background: #ccc;
+  padding: 5px;
+  border-radius: 8px;
 }
 
 .piece {
-  width:80px; /* Taille légèrement réduite pour que ça tienne sur l'écran */
+  width:80px;
   height:80px;
-  /* Modification : l'image doit faire 4x la taille d'une pièce (4x80 = 320) */
   background-size:320px 320px;
-  border:2px solid #555;
+  border:1px solid #444;
   cursor:pointer;
   touch-action:manipulation;
-  border-radius:6px;
+  border-radius:4px;
+  box-sizing: border-box;
 }
 
 #result {
   display:none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255,255,255,0.95);
+  z-index: 100;
   text-align:center;
-  margin-top:20px;
+  padding-top: 20px;
 }
 
+#result h3 {
+  font-size: 2rem;
+  color: #2e7d32;
+  margin-bottom: 10px;
+}
+
+/* Image affichée en grand */
 #result img {
-  max-width:300px;
-  border-radius:10px;
-  margin-top:10px;
+  max-width: 90%;
+  max-height: 70vh;
+  border-radius: 15px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  border: 5px solid white;
+}
+
+.btn-restart {
+  margin-top: 20px;
+  padding: 12px 25px;
+  background: #333;
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
 }
 </style>
 </head>
 <body>
 
-<div id="chrono">01:00</div>
+<div id="chrono">00:50</div>
 <div id="puzzle"></div>
 
 <div id="result">
-  <h3>Bravo ! Tu as réussi 🎉</h3>
+  <h3>🎉 BRAVO ! IMAGE COMPLÉTÉE 🎉</h3>
   <img src="Imprim.png" alt="Image finale">
+  <br>
+  <button class="btn-restart" onclick="location.reload()">Rejouer</button>
 </div>
 
 <script>
@@ -74,11 +119,9 @@ const puzzle = document.getElementById('puzzle');
 const result = document.getElementById('result');
 const chronoDisplay = document.getElementById('chrono');
 
-// --- MODIFICATIONS POUR 4x4 ---
 const size = 4; 
-const pieceWidth = 80; // Doit correspondre au CSS
+const pieceWidth = 80;
 let pieces = Array.from({length: size * size}, (_, i) => i);
-// ------------------------------
 
 function shuffle(array) {
   for (let i = array.length - 1; i > 0; i--) {
@@ -98,7 +141,6 @@ function renderPuzzle() {
     div.dataset.index = index;
     div.style.backgroundImage = "url('Imprim.png')";
     
-    // Calcul des positions pour le 4x4
     const x = -(num % size) * pieceWidth;
     const y = -Math.floor(num / size) * pieceWidth;
     
@@ -112,14 +154,19 @@ renderPuzzle();
 let first = null;
 puzzle.addEventListener('click', e => {
   if (!e.target.classList.contains('piece')) return;
+  
   if (!first) {
     first = e.target;
-    first.style.border = '3px solid yellow';
+    first.style.outline = '4px solid #fbc02d';
+    first.style.zIndex = '10';
   } else {
     const second = e.target;
-    [pieces[first.dataset.index], pieces[second.dataset.index]] =
-    [pieces[second.dataset.index], pieces[first.dataset.index]];
-    first.style.border = '';
+    const idx1 = first.dataset.index;
+    const idx2 = second.dataset.index;
+    
+    [pieces[idx1], pieces[idx2]] = [pieces[idx2], pieces[idx1]];
+    
+    first.style.outline = '';
     first = null;
     renderPuzzle();
     checkWin();
@@ -128,28 +175,35 @@ puzzle.addEventListener('click', e => {
 
 function checkWin() {
   if (pieces.every((val, i) => val === i)) {
+    clearInterval(timer);
     result.style.display = 'block';
-    clearInterval(timer); // On arrête le chrono quand c'est gagné !
   }
 }
 
 let timer;
 function startChrono() {
   clearInterval(timer);
-  let time = 60;
+  let time = 50; // Réglé sur 50 secondes
   updateChrono(time);
 
   timer = setInterval(() => {
     time--;
     updateChrono(time);
 
-    if (time === 10) {
-      const audio = new Audio("tic.mp3");
-      audio.play().catch(e => console.log("Audio bloqué par le navigateur"));
+    // Effet dynamique sur les 10 dernières secondes
+    if (time <= 10) {
+      chronoDisplay.classList.add('danger');
+      if (time > 0) {
+         const audio = new Audio("tic.mp3");
+         audio.play().catch(() => {}); 
+      }
+    } else {
+      chronoDisplay.classList.remove('danger');
     }
 
     if (time <= 0) {
       clearInterval(timer);
+      alert("Temps écoulé ! On recommence ?");
       autoReset();
     }
   }, 1000);
@@ -159,20 +213,15 @@ function updateChrono(time) {
   chronoDisplay.textContent = `00:${time.toString().padStart(2, '0')}`;
 }
 
-function updateChronoInitial() {
-  chronoDisplay.textContent = "01:00";
-}
-
 function autoReset() {
+  chronoDisplay.classList.remove('danger');
   pieces = shuffle([...pieces]);
   renderPuzzle();
   result.style.display = 'none';
-  updateChronoInitial();
   startChrono();
 }
 
-// lancement initial
-updateChronoInitial();
+// Lancement
 startChrono();
 </script>
 

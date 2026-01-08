@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Puzzle Challenge 4x4</title>
+<title>Puzzle Speedrun 4x4</title>
 <style>
 body {
   display:flex;
@@ -12,112 +12,103 @@ body {
   justify-content:center;
   min-height:100vh;
   background:#f0f0f0;
-  font-family:'Segoe UI', Arial, sans-serif;
-  padding:10px;
+  font-family: Arial, sans-serif;
   margin:0;
+  overflow: hidden;
 }
 
 #chrono {
-  font-size:32px;
+  font-size:40px;
   font-weight:bold;
-  margin-bottom:15px;
+  margin-bottom:20px;
   padding:10px 30px;
   background:white;
   border-radius:12px;
   border:3px solid #333;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
 }
 
-/* Effet dynamique pour les 10 dernières secondes */
 .danger {
   color: #ff0000;
   border-color: #ff0000 !important;
-  animation: pulse 0.5s infinite alternate;
-  transform: scale(1.1);
+  animation: pulse 0.4s infinite alternate;
+  transform: scale(1.2);
 }
 
 @keyframes pulse {
   from { box-shadow: 0 0 5px #ff0000; }
-  to { box-shadow: 0 0 20px #ff0000; }
+  to { box-shadow: 0 0 25px #ff0000; }
 }
 
 #puzzle {
   display:grid;
   grid-template-columns:repeat(4, 80px);
   grid-template-rows:repeat(4, 80px);
-  gap:5px;
-  background: #ccc;
-  padding: 5px;
+  gap:4px;
+  background: #333;
+  padding: 6px;
   border-radius: 8px;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
 }
 
 .piece {
   width:80px;
   height:80px;
   background-size:320px 320px;
-  border:1px solid #444;
   cursor:pointer;
   touch-action:manipulation;
-  border-radius:4px;
-  box-sizing: border-box;
+  border-radius:2px;
 }
 
+/* Écran de victoire total */
 #result {
   display:none;
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(255,255,255,0.95);
-  z-index: 100;
-  text-align:center;
-  padding-top: 20px;
+  width: 100vw;
+  height: 100vh;
+  background: white;
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-#result h3 {
-  font-size: 2rem;
-  color: #2e7d32;
-  margin-bottom: 10px;
-}
-
-/* Image affichée en grand */
 #result img {
-  max-width: 90%;
-  max-height: 70vh;
-  border-radius: 15px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-  border: 5px solid white;
+  max-width: 95%;
+  max-height: 80vh;
+  box-shadow: 0 0 50px rgba(0,0,0,0.1);
+  border-radius: 10px;
 }
 
-.btn-restart {
-  margin-top: 20px;
-  padding: 12px 25px;
-  background: #333;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 1rem;
+.restart-link {
+  margin-top: 30px;
+  color: #666;
+  text-decoration: none;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 </style>
 </head>
 <body>
 
-<div id="chrono">00:50</div>
-<div id="puzzle"></div>
+<div id="game-ui">
+    <div id="chrono">00:30</div>
+    <div id="puzzle"></div>
+</div>
 
 <div id="result">
-  <h3>🎉 BRAVO ! IMAGE COMPLÉTÉE 🎉</h3>
-  <img src="Imprim.png" alt="Image finale">
-  <br>
-  <button class="btn-restart" onclick="location.reload()">Rejouer</button>
+  <img src="Imprim.png" alt="Victoire">
+  <a href="#" class="restart-link" onclick="location.reload()">Rejouer</a>
 </div>
 
 <script>
 const puzzle = document.getElementById('puzzle');
 const result = document.getElementById('result');
 const chronoDisplay = document.getElementById('chrono');
+const gameUI = document.getElementById('game-ui');
 
 const size = 4; 
 const pieceWidth = 80;
@@ -176,35 +167,30 @@ puzzle.addEventListener('click', e => {
 function checkWin() {
   if (pieces.every((val, i) => val === i)) {
     clearInterval(timer);
-    result.style.display = 'block';
+    // On cache tout le reste et on affiche l'image seule
+    gameUI.style.display = 'none';
+    result.style.display = 'flex';
   }
 }
 
 let timer;
 function startChrono() {
-  clearInterval(timer);
-  let time = 50; // Réglé sur 50 secondes
+  let time = 30; // 30 secondes
   updateChrono(time);
 
   timer = setInterval(() => {
     time--;
     updateChrono(time);
 
-    // Effet dynamique sur les 10 dernières secondes
     if (time <= 10) {
       chronoDisplay.classList.add('danger');
-      if (time > 0) {
-         const audio = new Audio("tic.mp3");
-         audio.play().catch(() => {}); 
-      }
-    } else {
-      chronoDisplay.classList.remove('danger');
+      if (time >= 0) { new Audio("tic.mp3").play().catch(()=>{}); }
     }
 
     if (time <= 0) {
       clearInterval(timer);
-      alert("Temps écoulé ! On recommence ?");
-      autoReset();
+      alert("TROP LENT !");
+      location.reload();
     }
   }, 1000);
 }
@@ -213,15 +199,6 @@ function updateChrono(time) {
   chronoDisplay.textContent = `00:${time.toString().padStart(2, '0')}`;
 }
 
-function autoReset() {
-  chronoDisplay.classList.remove('danger');
-  pieces = shuffle([...pieces]);
-  renderPuzzle();
-  result.style.display = 'none';
-  startChrono();
-}
-
-// Lancement
 startChrono();
 </script>
 
